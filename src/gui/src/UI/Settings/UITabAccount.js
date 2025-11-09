@@ -180,8 +180,40 @@ export default {
                     $('.profile-image').addClass('profile-image-has-picture');
                     // update profile picture
                     update_profile(window.user.username, {picture: base64data})
-                    // Show remove button if it was hidden
-                    $el_window.find('.remove-profile-picture').parent().show();
+                    // Update window.user.profile for immediate UI updates
+                    if(window.user.profile){
+                        window.user.profile.picture = base64data;
+                    }
+                    // Create or show remove button
+                    let $removeButton = $el_window.find('.remove-profile-picture');
+                    if($removeButton.length === 0){
+                        // Button doesn't exist, create it
+                        const $buttonContainer = $(`<div style="text-align: center; margin-top: 10px;"></div>`);
+                        const $button = $(`<button class="button button-danger remove-profile-picture" style="font-size: 12px;">${i18n('remove_profile_picture')}</button>`);
+                        $buttonContainer.append($button);
+                        $el_window.find('.profile-picture').parent().append($buttonContainer);
+                        // Attach click handler to the new button
+                        $button.on('click', function (e) {
+                            // Remove picture from profile
+                            update_profile(window.user.username, {picture: null});
+                            
+                            // Update UI immediately
+                            $el_window.find('.profile-picture').css('background-image', `url('${window.icons['profile.svg']}')`);
+                            $('.profile-image').css('background-image', `url('${window.icons['profile.svg']}')`);
+                            $('.profile-image').removeClass('profile-image-has-picture');
+                            
+                            // Clear from user object
+                            if(window.user.profile){
+                                window.user.profile.picture = null;
+                            }
+                            
+                            // Hide remove button
+                            $el_window.find('.remove-profile-picture').parent().hide();
+                        });
+                    } else {
+                        // Button exists, just show it
+                        $removeButton.parent().show();
+                    }
                 }
             }
         })
