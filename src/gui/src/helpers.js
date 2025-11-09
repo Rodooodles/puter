@@ -2635,7 +2635,9 @@ window.update_profile = function(username, key_vals){
             for (const key in key_vals) {
                 profile[key] = key_vals[key];
                 // update window.user.profile
-                window.user.profile[key] = key_vals[key];
+                if(window.user.profile){
+                    window.user.profile[key] = key_vals[key];
+                }
             }
 
             puter.fs.write('/'+username+'/Public/.profile', JSON.stringify(profile));
@@ -2645,11 +2647,20 @@ window.update_profile = function(username, key_vals){
         });
     }).catch((e)=>{
         if(e?.code === "subject_does_not_exist"){
-            // create .profile file
-            puter.fs.write('/'+username+'/Public/.profile', JSON.stringify({}));
+            // create .profile file with key_vals
+            const profile = {};
+            for (const key in key_vals) {
+                profile[key] = key_vals[key];
+                // update window.user.profile
+                if(window.user.profile){
+                    window.user.profile[key] = key_vals[key];
+                }
+            }
+            puter.fs.write('/'+username+'/Public/.profile', JSON.stringify(profile));
+        } else {
+            // Ignored
+            console.log(e);
         }
-        // Ignored
-        console.log(e);
     });
 }
 
