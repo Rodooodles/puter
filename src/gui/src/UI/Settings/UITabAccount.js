@@ -37,6 +37,12 @@ export default {
         h += `<div style="overflow: hidden; display: flex; margin-bottom: 20px; flex-direction: column; align-items: center;">`;
             h += `<div class="profile-picture change-profile-picture" style="background-image: url('${html_encode(window.user?.profile?.picture ?? window.icons['profile.svg'])}');">`;
             h += `</div>`;
+            // Remove profile picture button (only show if picture exists)
+            if(window.user?.profile?.picture){
+                h += `<div style="text-align: center; margin-top: 10px;">`;
+                    h += `<button class="button button-danger remove-profile-picture" style="font-size: 12px;">${i18n('remove_profile_picture')}</button>`;
+                h += `</div>`;
+            }
         h += `</div>`;
 
         // change password button
@@ -174,8 +180,29 @@ export default {
                     $('.profile-image').addClass('profile-image-has-picture');
                     // update profile picture
                     update_profile(window.user.username, {picture: base64data})
+                    // Show remove button if it was hidden
+                    $el_window.find('.remove-profile-picture').parent().show();
                 }
             }
         })
+
+        // Remove profile picture button handler
+        $el_window.find('.remove-profile-picture').on('click', function (e) {
+            // Remove picture from profile
+            update_profile(window.user.username, {picture: null});
+            
+            // Update UI immediately
+            $el_window.find('.profile-picture').css('background-image', `url('${window.icons['profile.svg']}')`);
+            $('.profile-image').css('background-image', `url('${window.icons['profile.svg']}')`);
+            $('.profile-image').removeClass('profile-image-has-picture');
+            
+            // Clear from user object
+            if(window.user.profile){
+                window.user.profile.picture = null;
+            }
+            
+            // Hide remove button
+            $el_window.find('.remove-profile-picture').parent().hide();
+        });
     },
 };
