@@ -23,9 +23,9 @@ export class ExecService extends Service {
             handler: this.connectToInstance.bind(this),
         });
 
-        this.log = puter.log.fields({
+        this.log = (puter?.log?.fields) ? puter.log.fields({
             category: 'ipc'
-        });
+        }) : console;
     }
     
     // This method is exposed to apps via IPCService.
