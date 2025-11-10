@@ -274,6 +274,8 @@ const en = {
         shortcut_to: "Shortcut to",
         show_all_windows: "Show All Windows",
         show_hidden: 'Show hidden',
+        hide_desktop_icons: 'Hide Desktop Icons',
+        show_desktop_icons: 'Show Desktop Icons',
         sign_in_with_puter: "Sign in with Puter",
         sign_up: "Sign Up",
         signing_in: "Signing in…",
