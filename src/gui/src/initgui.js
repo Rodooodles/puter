@@ -1438,3 +1438,8 @@ $(document).on('contextmenu', '.disable-context-menu', function(e){
 
 // util/desktop.js
 window.privacy_aware_path = privacy_aware_path({ window });
+
+// Expose UIAlert globally for testing (dev only)
+if (window.gui_env === 'dev' || !window.gui_env) {
+    window.UIAlert = UIAlert;
+}
