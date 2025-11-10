@@ -21,6 +21,8 @@ import UIWindow from './UIWindow.js'
 
 function UIAlert(options){
     // set sensible defaults
+    if(!options) options = {};
+    
     if(arguments.length > 0){
         // if first argument is a string, then assume it is the message
         if(window.isString(arguments[0])){
@@ -34,17 +36,43 @@ function UIAlert(options){
     }
 
     return new Promise(async (resolve) => {
-        // provide an 'OK' button if no buttons are provided
-        if(!options.buttons || options.buttons.length === 0){
+        // Normalize button configurations (support both string and object syntax)
+        if (options.buttons && Array.isArray(options.buttons)) {
+            options.buttons = options.buttons.map(btn => {
+                if (typeof btn === 'string') {
+                    return { 
+                        label: btn, 
+                        value: btn, 
+                        type: 'default' 
+                    };
+                }
+                // Ensure required properties for object syntax
+                return {
+                    label: btn.label ?? 'OK',
+                    value: btn.value ?? btn.label ?? 'OK',
+                    type: btn.type ?? 'default'
+                };
+            });
+        } else if (!options.buttons || options.buttons.length === 0) {
+            // provide an 'OK' button if no buttons are provided
             options.buttons = [
                 {label: i18n('ok'), value: true, type: 'primary'}
             ]
         }
 
-        // set body icon
-        options.body_icon = options.body_icon ?? window.icons['warning-sign.svg'];
-        if(options.type === 'success')
-            options.body_icon = window.icons['c-check.svg'];
+        // set body icon - support multiple alert types
+        const typeIconMap = {
+            'info': window.icons['info.svg'] ?? window.icons['reminder.svg'],
+            'success': window.icons['c-check.svg'],
+            'warning': window.icons['warning-sign.svg'],
+            'error': window.icons['danger.svg'] ?? window.icons['warning-sign.svg'],
+            'question': window.icons['question.svg'] ?? window.icons['reminder.svg']
+        };
+        
+        // Custom icon takes precedence, then type-based, then default warning
+        options.body_icon = options.body_icon 
+            ?? typeIconMap[options.type] 
+            ?? typeIconMap['warning'];
 
         let santized_message = html_encode(options.message);
 
@@ -73,6 +101,27 @@ function UIAlert(options){
             }
             h += `</div>`;
         }
+
+        // Type-specific styling (optional enhancement)
+        const typeStyles = {
+            'error': { 
+                'border-left': '4px solid #f00808',
+                'background-color': 'rgba(248, 8, 8, 0.05)'
+            },
+            'success': { 
+                'border-left': '4px solid #08bf4e',
+                'background-color': 'rgba(8, 191, 78, 0.05)'
+            },
+            'info': { 
+                'border-left': '4px solid #088ef0',
+                'background-color': 'rgba(8, 142, 240, 0.05)'
+            },
+            'question': { 
+                'border-left': '4px solid #ffa500',
+                'background-color': 'rgba(255, 165, 0, 0.05)'
+            }
+            // 'warning' uses default styling
+        };
 
         const el_window = await UIWindow({
             title: null,
@@ -104,6 +153,8 @@ function UIAlert(options){
                 padding: '20px',
                 'background-color': 'rgba(231, 238, 245, .95)',
                 'backdrop-filter': 'blur(3px)',
+                ...(typeStyles[options.type] ?? {}),
+                ...options.body_css, // Allow custom overrides
             }
         });
         // focus to primary btn
