@@ -1145,6 +1145,78 @@ async function UIDesktop(options){
     // prepend toolbar to desktop
     $(ht).insertBefore(el_desktop);
 
+    // ----------------------------------------------------
+    // Toolbar Auto-Hide Feature
+    // ----------------------------------------------------
+    // Constants
+    const TOOLBAR_HIDE_DELAY = 2000; // 2 seconds
+    const TOOLBAR_PROXIMITY_ZONE = 50; // 50px from top
+
+    // Initialize toolbar auto-hide state
+    window.toolbar_auto_hide_enabled = window.user_preferences?.toolbar_auto_hide ?? true;
+    window.toolbar_hide_timeout = null;
+    window.toolbar_is_hidden = false;
+
+    // Disable on mobile devices
+    if(isMobile.phone || isMobile.tablet) {
+        window.toolbar_auto_hide_enabled = false;
+    }
+
+    // Hide toolbar function
+    window.hide_toolbar = function() {
+        if(!window.toolbar_auto_hide_enabled) return;
+        window.toolbar_is_hidden = true;
+        $('.toolbar').addClass('toolbar-hidden');
+        if(window.toolbar_hide_timeout) {
+            clearTimeout(window.toolbar_hide_timeout);
+            window.toolbar_hide_timeout = null;
+        }
+    };
+
+    // Show toolbar function
+    window.show_toolbar = function() {
+        window.toolbar_is_hidden = false;
+        $('.toolbar').removeClass('toolbar-hidden');
+        if(window.toolbar_hide_timeout) {
+            clearTimeout(window.toolbar_hide_timeout);
+            window.toolbar_hide_timeout = null;
+        }
+        // Reset timer if enabled
+        if(window.toolbar_auto_hide_enabled) {
+            window.reset_toolbar_timer();
+        }
+    };
+
+    // Reset timer function
+    window.reset_toolbar_timer = function() {
+        if(!window.toolbar_auto_hide_enabled) return;
+        if(window.toolbar_is_hidden) return;
+        if(window.toolbar_hide_timeout) {
+            clearTimeout(window.toolbar_hide_timeout);
+        }
+        window.toolbar_hide_timeout = setTimeout(() => {
+            window.hide_toolbar();
+        }, TOOLBAR_HIDE_DELAY);
+    };
+
+    // Start initial timer if enabled
+    if(window.toolbar_auto_hide_enabled) {
+        window.reset_toolbar_timer();
+    }
+
+    // Reset timer when interacting with toolbar
+    $(document).on('mouseenter', '.toolbar', function() {
+        if(window.toolbar_auto_hide_enabled) {
+            window.show_toolbar();
+        }
+    });
+
+    $(document).on('click', '.toolbar, .toolbar-btn', function() {
+        if(window.toolbar_auto_hide_enabled) {
+            window.reset_toolbar_timer();
+        }
+    });
+
     // notification container
     $('body').append(`<div class="notification-container"><div class="notifications-close-all">${i18n('close_all')}</div></div>`);
 
@@ -1790,6 +1862,19 @@ window.enter_fullpage_mode = (el_window)=>{
         left: 0,
         'border-radius': 0,
     });
+    // Disable toolbar auto-hide in fullpage mode
+    if(window.toolbar_auto_hide_enabled) {
+        window.show_toolbar();
+        // Temporarily disable auto-hide
+        const wasEnabled = window.toolbar_auto_hide_enabled;
+        window.toolbar_auto_hide_enabled = false;
+        if(window.toolbar_hide_timeout) {
+            clearTimeout(window.toolbar_hide_timeout);
+            window.toolbar_hide_timeout = null;
+        }
+        // Store original state for restoration
+        window.toolbar_auto_hide_was_enabled = wasEnabled;
+    }
 }
 
 window.exit_fullpage_mode = (el_window)=>{
@@ -1809,6 +1894,15 @@ window.exit_fullpage_mode = (el_window)=>{
 
     // hide the 'Show Desktop' button in toolbar
     $('.show-desktop-btn').hide();
+
+    // Restore toolbar auto-hide if it was enabled
+    if(window.toolbar_auto_hide_was_enabled !== undefined) {
+        window.toolbar_auto_hide_enabled = window.toolbar_auto_hide_was_enabled;
+        if(window.toolbar_auto_hide_enabled) {
+            window.reset_toolbar_timer();
+        }
+        delete window.toolbar_auto_hide_was_enabled;
+    }
 
     // refresh desktop background
     window.refresh_desktop_background();

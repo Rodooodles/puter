@@ -1215,6 +1215,11 @@ window.initgui = async function(options){
     // update mouse position coordinates
     $(document).mousemove(function(event){
         update_mouse_position(event.clientX, event.clientY);
+        
+        // Reset toolbar hide timer on mouse movement
+        if(window.toolbar_auto_hide_enabled && !window.toolbar_is_hidden) {
+            window.reset_toolbar_timer();
+        }
     });
 
     //--------------------------------------------------------
