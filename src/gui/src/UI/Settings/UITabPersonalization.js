@@ -48,6 +48,10 @@ export default {
                     <option value="show">${i18n('clock_visible_show')}</option>
                 </select>
             </div>
+            <div class="settings-card">
+                <strong style="flex-grow:1;">Auto-hide toolbar</strong>
+                <input type="checkbox" class="toolbar-auto-hide-toggle" style="margin-left: 10px;">
+            </div>
             <div class="settings-card" style="display: block; height: auto;">
                 <strong style="margin: 15px 0 30px; display: block;">${i18n('menubar_style')}</strong>
                 <div style="flex-grow:1; margin-top: 10px;">
@@ -98,6 +102,54 @@ export default {
 
         $el_window.on('change', 'select.change-clock-visible', function(e){
             window.change_clock_visible(this.value);
+        });
+
+        // Load toolbar auto-hide preference
+        puter.kv.get('user_preferences.toolbar_auto_hide').then(async (val) => {
+            const isEnabled = val !== null ? val : true; // Default to true
+            $el_window.find('.toolbar-auto-hide-toggle').prop('checked', isEnabled);
+            // Sync the actual state (but don't change toolbar visibility on load, only sync the enabled state)
+            if(window.toolbar_auto_hide_enabled !== isEnabled) {
+                window.toolbar_auto_hide_enabled = isEnabled;
+                if(isEnabled) {
+                    // If enabling, start timer if toolbar is visible
+                    if(!window.toolbar_is_hidden) {
+                        window.reset_toolbar_timer();
+                    }
+                } else {
+                    // If disabling, show toolbar and clear timer
+                    if(window.toolbar_hide_timeout) {
+                        clearTimeout(window.toolbar_hide_timeout);
+                        window.toolbar_hide_timeout = null;
+                    }
+                    window.show_toolbar();
+                }
+            }
+        });
+
+        // Handle toolbar auto-hide toggle
+        $el_window.find('.toolbar-auto-hide-toggle').on('change', function() {
+            const isEnabled = $(this).prop('checked');
+            window.mutate_user_preferences({ 
+                toolbar_auto_hide: isEnabled 
+            });
+            // Apply immediately
+            window.toolbar_auto_hide_enabled = isEnabled;
+            if(window.toolbar_auto_hide_enabled) {
+                // Enable: Hide toolbar immediately, then start timer for future auto-hide
+                if(window.toolbar_hide_timeout) {
+                    clearTimeout(window.toolbar_hide_timeout);
+                    window.toolbar_hide_timeout = null;
+                }
+                window.hide_toolbar(); // Hide immediately
+            } else {
+                // Disable: show toolbar and clear timer
+                if(window.toolbar_hide_timeout) {
+                    clearTimeout(window.toolbar_hide_timeout);
+                    window.toolbar_hide_timeout = null;
+                }
+                window.show_toolbar(); // Show if disabled
+            }
         });
 
         window.change_clock_visible();
