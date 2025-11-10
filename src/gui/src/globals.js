@@ -99,7 +99,12 @@ if (window.user_preferences === null) {
         show_hidden_files: false,
         language: navigator.language.split("-")[0] || navigator.userLanguage || 'en',
         clock_visible: 'auto',
+        desktop_icons_visible: true,
     }
+}
+// Ensure desktop_icons_visible exists even if preferences already exist
+if (window.user_preferences.desktop_icons_visible === undefined) {
+    window.user_preferences.desktop_icons_visible = true;
 }
 
 window.window_stack = []
