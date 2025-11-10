@@ -21,6 +21,14 @@ const update_mouse_position = function(x, y){
     window.mouseX = x;
     window.mouseY = y;
 
+    // Toolbar auto-hide: show if mouse near top edge
+    if(window.toolbar_auto_hide_enabled && window.toolbar_is_hidden) {
+        const TOOLBAR_PROXIMITY_ZONE = 50; // 50px from top
+        if(window.mouseY < TOOLBAR_PROXIMITY_ZONE) {
+            window.show_toolbar();
+        }
+    }
+
     // mouse in top-left corner of screen
     if((window.mouseX < 150 && window.mouseY < window.toolbar_height + 20) || (window.mouseX < 20 && window.mouseY < 150))
         window.current_active_snap_zone = 'nw';
